@@ -143,7 +143,7 @@ resource "libvirt_domain" "domain" {
   network_interface {
     hostname       = "h7c-node-${count.index + 1  + var.node_offset }.villingaholt.nu"
     network_name   = "default"
-    mac            = "52:54:00:7e:30:0${count.index + 1  + var.node_offset }"
+    mac            = "${var.mac_address_pattern}${count.index + 1  + var.node_offset }"
     wait_for_lease = true
   }
 
