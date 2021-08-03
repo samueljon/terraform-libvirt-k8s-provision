@@ -123,7 +123,7 @@ resource "libvirt_volume" "fc34_master_image" {
 }
 
 resource "libvirt_volume" "volume" {
-  name           = "${host_prefix}${count.index + 1 + var.node_offset }.${var.base_domain}.qcow2"
+  name           = "${var.host_prefix}${count.index + 1 + var.node_offset }.${var.base_domain}.qcow2"
   base_volume_id = libvirt_volume.fc34_master_image.id
   size           = var.node_disk_size
   count          = var.number_of_nodes
@@ -131,7 +131,7 @@ resource "libvirt_volume" "volume" {
 
 resource "libvirt_domain" "domain" {
   count = var.number_of_nodes
-  name = "${host_prefix}${count.index  + 1 + var.node_offset }.${var.base_domain}"
+  name = "${var.host_prefix}${count.index  + 1 + var.node_offset }.${var.base_domain}"
   memory = var.node_memory
   vcpu   = var.node_vcpu
   qemu_agent = true
@@ -143,7 +143,7 @@ resource "libvirt_domain" "domain" {
   }
 
   network_interface {
-    hostname       = "${host_prefix}${count.index + 1  + var.node_offset }.${var.base_domain}"
+    hostname       = "${var.host_prefix}${count.index + 1  + var.node_offset }.${var.base_domain}"
     network_name   = "default"
     mac            = "${var.mac_address_pattern}${count.index + 1  + var.node_offset }"
     wait_for_lease = true
