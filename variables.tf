@@ -27,3 +27,14 @@ variable "mac_address_pattern" {
   type = string
   default = "52:54:00:7e:30:0"
 }
+
+
+variable "host_prefix" {
+  type = string
+  default = "h7c-node-"
+}
+
+variable "base_domain" {
+  type = string
+  default = "villingaholt.nu"
+}

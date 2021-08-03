@@ -12,6 +12,7 @@ terraform {
 # https://github.com/dmacvicar/terraform-provider-libvirt/blob/main/website/docs/r/domain.html.markdown
 # https://github.com/dmacvicar/terraform-provider-libvirt/blob/main/examples/v0.13/count/main.tf
 # https://yetiops.net/posts/proxmox-terraform-cloudinit-saltstack-prometheus/
+# https://www.server-world.info/en/note?os=Fedora_34&p=kubernetes&f=1
 
 provider "libvirt" {
   uri = "qemu:///system"
@@ -90,6 +91,7 @@ write_files:
 packages:
   - vim-enhanced
   - bash-completion
+  - nfs-utils
 runcmd:
   # Recreate grub config with updated command line params
   - grub2-mkconfig -o /boot/grub2/grub.cfg
