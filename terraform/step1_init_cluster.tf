@@ -15,11 +15,11 @@ terraform {
 # https://www.server-world.info/en/note?os=Fedora_34&p=kubernetes&f=1
 
 provider "libvirt" {
-  uri = "qemu:///system"
+  uri = "qemu+ssh:///system"
 }
 
-resource "libvirt_cloudinit_disk" "cloudinit_redhat" {
-  name = "cloudinit_redhat.iso"
+resource "libvirt_cloudinit_disk" "cloudinit_k8s" {
+  name = "cloudinit_k8s.iso"
   pool = "default"
 
   user_data = <<EOF
@@ -37,13 +37,13 @@ users:
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh-authorized-keys:
-      - ${file("public_ssh_keys/id_personal_ed25519.pub")}
+      - ${file("../public_ssh_keys/id_personal_ed25519.pub")}
   - name: ansible
     groups: wheel
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh-authorized-keys:
-      - ${file("public_ssh_keys/id_personal_ansible_ed25519.pub")}
+      - ${file("../public_ssh_keys/id_personal_ansible_ed25519.pub")}
 
 growpart:
   mode: auto
@@ -62,6 +62,7 @@ write_files:
       net.bridge.bridge-nf-call-iptables  = 1
       net.bridge.bridge-nf-call-ip6tables = 1
       net.ipv4.ip_forward                 = 1
+      net.ipv6.conf.all.forwarding        = 1
   
   - path: /etc/sysctl.d/k8s_arp.conf
     content: |
@@ -83,10 +84,10 @@ write_files:
       127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
       ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
-      192.168.88.241 h7c-node-1.villingaholt.nu h7c-node-1
-      192.168.88.242 h7c-node-2.villingaholt.nu h7c-node-2
-      192.168.88.243 h7c-node-3.villingaholt.nu h7c-node-3
-      192.168.88.244 h7c-node-4.villingaholt.nu h7c-node-4
+      #192.168.88.241 h7c-node-1.villingaholt.nu h7c-node-1
+      #192.168.88.242 h7c-node-2.villingaholt.nu h7c-node-2
+      #192.168.88.243 h7c-node-3.villingaholt.nu h7c-node-3
+      #192.168.88.244 h7c-node-4.villingaholt.nu h7c-node-4
 
 packages:
   - vim-enhanced
@@ -104,7 +105,7 @@ runcmd:
   - setenforce 0
   - sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
   # Install and activate cri-o
-  - dnf module enable cri-o:1.20 -y 
+  - dnf module enable cri-o:1.21 -y 
   - dnf install cri-o -y
   - systemctl daemon-reload
   - systemctl enable crio --now
@@ -116,27 +117,27 @@ EOF
 
 }
 
-resource "libvirt_volume" "fc34_master_image" {
-  name   = "fc34_master_image.qcow2"
-  source = "https://download.fedoraproject.org/pub/fedora/linux/releases/34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2"
+resource "libvirt_volume" "fc35_master_image" {
+  name   = "fc35_master_image.qcow2"
+  source = "https://download.fedoraproject.org/pub/fedora/linux/releases/35/Cloud/x86_64/images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2"
   format = "qcow2"
 }
 
 resource "libvirt_volume" "volume" {
   name           = "${var.host_prefix}${count.index + 1 + var.node_offset }.${var.base_domain}.qcow2"
-  base_volume_id = libvirt_volume.fc34_master_image.id
+  base_volume_id = libvirt_volume.fc35_master_image.id
   size           = var.node_disk_size
   count          = var.number_of_nodes
 }
 
 resource "libvirt_domain" "domain" {
-  count = var.number_of_nodes
-  name = "${var.host_prefix}${count.index  + 1 + var.node_offset }.${var.base_domain}"
-  memory = var.node_memory
-  vcpu   = var.node_vcpu
-  qemu_agent = true
+  count       = var.number_of_nodes
+  name        = "${var.host_prefix}${count.index  + 1 + var.node_offset }.${var.base_domain}"
+  memory      = var.node_memory
+  vcpu        = var.node_vcpu
+  qemu_agent  = true
 
-  cloudinit = libvirt_cloudinit_disk.cloudinit_redhat.id
+  cloudinit = libvirt_cloudinit_disk.cloudinit_k8s.id
 
   disk {
     volume_id = element(libvirt_volume.volume.*.id, count.index)
@@ -156,9 +157,9 @@ resource "libvirt_domain" "domain" {
   }
 
   graphics {
-    type        = "vnc"
-    autoport    = true
-    listen_type = "address"
+    type           = "vnc"
+    autoport       = true
+    listen_type    = "address"
     listen_address = "127.0.0.1"
   }
 
