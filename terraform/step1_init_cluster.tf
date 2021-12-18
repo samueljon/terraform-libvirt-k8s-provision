@@ -68,16 +68,27 @@ write_files:
     content: |
       net.ipv4.conf.all.arp_filter=1
 
-  - path: /etc/default/grub
+  - path: /etc/yum.repos.d/kubernetes.repolist
     content: |
-      GRUB_TIMEOUT=1
-      GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
-      GRUB_DEFAULT=saved
-      GRUB_DISABLE_SUBMENU=true
-      GRUB_TERMINAL_OUTPUT="console"
-      GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0 no_timer_check net.ifnames=0 console=tty1 console=ttyS0,115200n8"
-      GRUB_DISABLE_RECOVERY="true"
-      GRUB_ENABLE_BLSCFG=true
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+
+  #- path: /etc/default/grub
+  #  content: |
+  #    GRUB_TIMEOUT=1
+  #    GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+  #    GRUB_DEFAULT=saved
+  #    GRUB_DISABLE_SUBMENU=true
+  #    GRUB_TERMINAL_OUTPUT="console"
+  #    GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0 no_timer_check net.ifnames=0 console=tty1 console=ttyS0,115200n8"
+  #    GRUB_DISABLE_RECOVERY="true"
+  #    GRUB_ENABLE_BLSCFG=true
 
   - path: /etc/hosts
     content: |
@@ -105,12 +116,16 @@ runcmd:
   - setenforce 0
   - sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
   # Install and activate cri-o
-  - dnf module enable cri-o:1.21 -y 
+  - dnf check-update
+  - dnf module enable cri-o:1.22 -y 
   - dnf install cri-o -y
   - systemctl daemon-reload
   - systemctl enable crio --now
+  # Install k8s components
+  - yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+  - systemctl enable --now kubelet
   # Turn off SWAP settings
-  - touch /etc/systemd/zram-generator.conf
+  #- touch /etc/systemd/zram-generator.conf
   # reboot the host once completed
   - reboot 
 EOF
