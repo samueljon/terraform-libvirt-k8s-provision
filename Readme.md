@@ -1,9 +1,10 @@
-# Fedora 34 bootstrap for kubernetes on KVM host
+# Fedora 35 bootstrap for kubernetes on KVM host
 
-This is a bootstrap for Fedora Core 34 ( Cloud Image ) on a kvm host using libvirt provider. This plan basically installs the operating system and does some initial configuration with cloud-init so that the nodes are ready for running nessecary steps for adding kubernetes repo's and tools and run k8s bootstrapping with kubeadm. 
+This is a bootstrap for Fedora Core 35 ( Cloud Image ) on a kvm host using libvirt provider. This plan basically installs the operating system and does some initial configuration with cloud-init so that the nodes are ready for running nessecary steps for adding kubernetes repo's and tools and run k8s bootstrapping with kubeadm. 
 
 ```shell
-# Standar lifecycle with default values
+# Standard lifecycle with default values
+cd terraform
 terraform init
 terraform plan
 terraform apply
